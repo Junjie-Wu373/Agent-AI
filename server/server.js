@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import multer from "multer"; // Import multer
 import chat from "./chat.js";
+import chatMCP from "./chat-mcp.js";
 import { file } from "zod";
 import { fi } from "zod/v4/locales";
 
@@ -12,12 +13,12 @@ const app = express();
 app.use(cors());
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "uploads/");
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.originalname);
-    },
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
 });
 
 const upload = multer({ storage });
@@ -27,19 +28,20 @@ const PORT = 5001;
 let filePath;
 
 app.post("/upload", upload.single("file"), (req, res) => {
-    filePath = req.file.path;
-    res.send(filePath + " uploaded successfully.")
+  filePath = req.file.path;
+  res.send(filePath + " uploaded successfully.");
 });
 
 app.get("/chat", async (req, res) => {
-    const resp = await chat(filePath, req.query.question)
+  const ragResp = await chat(filePath, req.query.question);
+  const mcpResp = await chatMCP(req.query.question);
 
-    res.send({
-        ragAnswer: resp.text,
-        mcpAnswer: "N/A",
-    });
+  res.send({
+    ragAnswer: ragResp.text,
+    mcpAnswer: mcpResp.text,
+  });
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
